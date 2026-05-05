@@ -5,4 +5,6 @@ import org.udhay.ollama.api.ListResponse
 
 interface ModelsRepository {
     suspend fun getModels() : List<OllamaModel>
+
+    suspend fun getStatus() : Boolean
 }
