@@ -1,6 +1,7 @@
 package com.udhay.kollama.core.di
 
 import com.udhay.kollama.feature.settings.domain.repository.UserSettingsRepository
+import kotlinx.coroutines.flow.first
 import org.koin.core.annotation.Module
 import org.koin.core.annotation.Single
 import org.udhay.ollama.OllamaClient
@@ -13,7 +14,7 @@ class NetworkModule {
     fun provideOllamaClient(repository: UserSettingsRepository): OllamaClient {
         return OllamaClient(
             configProvider = {
-                val settings = repository.getUserSettings()
+                val settings = repository.settings.first()
                 OllamaClientConfig(
                     host = settings.serverHost,
                     headers = settings.serverHeaders

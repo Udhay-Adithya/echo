@@ -2,11 +2,11 @@ package com.udhay.kollama.feature.settings.domain.usecase
 
 import com.udhay.kollama.feature.settings.domain.model.UserSettings
 import com.udhay.kollama.feature.settings.domain.repository.UserSettingsRepository
+import kotlinx.coroutines.flow.Flow
+import org.koin.core.annotation.Factory
 import org.koin.core.annotation.Single
 
-@Single
-class GetUserSettingsUseCase(
-    private val repository: UserSettingsRepository
-) {
-    suspend operator fun invoke(): UserSettings = repository.getUserSettings()
+@Factory
+class GetUserSettingsUseCase(private val repository: UserSettingsRepository) {
+    operator fun invoke(): Flow<UserSettings> = repository.settings
 }

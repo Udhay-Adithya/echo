@@ -6,9 +6,9 @@ import com.udhay.kollama.feature.settings.domain.model.UserSettings
 import com.udhay.kollama.feature.settings.domain.usecase.ClearUserSettingsUseCase
 import com.udhay.kollama.feature.settings.domain.usecase.GetUserSettingsUseCase
 import com.udhay.kollama.feature.settings.domain.usecase.SaveUserSettingsUseCase
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
 
@@ -19,30 +19,18 @@ class UserSettingsViewModel(
     private val clearUserSettingsUseCase: ClearUserSettingsUseCase
 ) : ViewModel() {
 
-    private val _settings = MutableStateFlow(UserSettings())
-    val settings: StateFlow<UserSettings> = _settings.asStateFlow()
-
-    init {
-        getSettings()
-    }
-
-    fun getSettings() {
-        viewModelScope.launch {
-            _settings.value = getUserSettingsUseCase()
-        }
-    }
+    val settings: StateFlow<UserSettings> = getUserSettingsUseCase()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(500),
+            initialValue = UserSettings()
+        )
 
     fun save(settings: UserSettings) {
-        viewModelScope.launch {
-            saveUserSettingsUseCase(settings)
-            _settings.value = settings
-        }
+        viewModelScope.launch { saveUserSettingsUseCase(settings) }
     }
 
     fun reset() {
-        viewModelScope.launch {
-            clearUserSettingsUseCase()
-            _settings.value = UserSettings()
-        }
+        viewModelScope.launch { clearUserSettingsUseCase() }
     }
 }
