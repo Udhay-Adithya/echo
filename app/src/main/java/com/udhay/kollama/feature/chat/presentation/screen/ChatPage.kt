@@ -26,6 +26,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -33,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.udhay.kollama.R
 import com.udhay.kollama.core.ui.theme.KollamaTheme
 import com.udhay.kollama.feature.chat.presentation.components.ChatDrawer
@@ -123,7 +125,9 @@ fun ChatPage(
                         .fillMaxWidth()
                 ) {
                     if (messages.isEmpty()) {
-                        WelcomeScreen(modifier = Modifier.fillMaxSize())
+                        WelcomeScreen(
+                            modifier = Modifier.fillMaxSize()
+                        )
                     } else {
                         LazyColumn(
                             state = listState,
