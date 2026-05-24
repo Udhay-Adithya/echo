@@ -17,7 +17,10 @@ class NetworkModule {
                 val settings = repository.settings.first()
                 OllamaClientConfig(
                     host = settings.serverHost,
-                    headers = settings.serverHeaders
+                    headers = settings.serverHeaders,
+                    requestTimeoutMillis = 300_000, // 5 minutes
+                    connectTimeoutMillis = 10_000,  // 10 seconds
+                    socketTimeoutMillis = 300_000   // 5 minutes
                 )
             }
         )
