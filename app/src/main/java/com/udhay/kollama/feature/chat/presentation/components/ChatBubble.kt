@@ -12,12 +12,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.mikepenz.markdown.m3.Markdown
+import com.mikepenz.markdown.m3.markdownColor
+import com.mikepenz.markdown.m3.markdownTypography
 import com.udhay.kollama.R
 import com.udhay.kollama.core.ui.theme.KollamaTheme
 import org.udhay.ollama.api.Message
@@ -60,10 +62,16 @@ fun ChatBubble(message: Message) {
                 shape = shape,
                 modifier = Modifier.fillMaxWidth(0.75f)
             ) {
-                Text(
-                    text = content,
+                Markdown(
+                    content = content,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                    style = MaterialTheme.typography.bodyLarge
+                    colors = markdownColor(
+                        text = contentColor,
+                    ),
+                    typography = markdownTypography(
+                        text = MaterialTheme.typography.bodyLarge,
+                        paragraph = MaterialTheme.typography.bodyLarge
+                    )
                 )
             }
         }
@@ -104,10 +112,29 @@ fun ChatBubble(message: Message) {
 
 @Preview(showBackground = true)
 @Composable
-private fun ChatBubblePreview() {
-    KollamaTheme() {
-        ChatBubble(
-            message = Message(role = MessageRole.User, content = "Hello Kollama!")
-        )
+private fun ChatBubbleMarkdownPreview() {
+    KollamaTheme {
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            ChatBubble(
+                message = Message(
+                    role = MessageRole.User,
+                    content = "Hello! **This is bold** and *this is italic*."
+                )
+            )
+            ChatBubble(
+                message = Message(
+                    role = MessageRole.Assistant,
+                    content = """
+                        Here is some code:
+                        ```kotlin
+                        fun hello() = println("Hello")
+                        ```
+                        And a list:
+                        - Item 1
+                        - Item 2
+                    """.trimIndent()
+                )
+            )
+        }
     }
 }
