@@ -4,9 +4,13 @@ import com.udhay.kollama.feature.chat.data.model.toDomain
 import com.udhay.kollama.feature.chat.domain.model.OllamaModel
 import com.udhay.kollama.feature.chat.domain.repository.ModelsRepository
 import com.udhay.kollama.feature.settings.domain.repository.UserSettingsRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import org.koin.core.annotation.Single
 import org.udhay.ollama.OllamaClient
+import org.udhay.ollama.api.ChatRequest
+import org.udhay.ollama.api.ChatResponse
 
 @Single
 class ModelsRepositoryImpl(

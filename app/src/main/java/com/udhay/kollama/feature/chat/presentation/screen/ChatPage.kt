@@ -10,12 +10,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -27,35 +28,45 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.udhay.kollama.R
 import com.udhay.kollama.core.ui.theme.KollamaTheme
-import com.udhay.kollama.feature.chat.presentation.components.ChatDrawer
-import com.udhay.kollama.feature.chat.presentation.components.WelcomeScreen
 import com.udhay.kollama.feature.chat.presentation.components.ChatBubble
+import com.udhay.kollama.feature.chat.presentation.components.ChatDrawer
 import com.udhay.kollama.feature.chat.presentation.components.ChatInputBar
-import com.udhay.kollama.feature.chat.data.model.ChatMessage
-import kotlinx.coroutines.delay
+import com.udhay.kollama.feature.chat.presentation.components.WelcomeScreen
+import com.udhay.kollama.feature.chat.presentation.state.ChatUiState
+import com.udhay.kollama.feature.chat.presentation.viewmodel.ChatViewModel
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatPage(
     modifier: Modifier = Modifier,
+    viewModel: ChatViewModel = koinViewModel(),
     onOpenSettings: () -> Unit,
 ) {
     val drawerState: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val textFieldState: TextFieldState = rememberTextFieldState()
     val scope = rememberCoroutineScope()
-    val messages = remember { mutableStateListOf<ChatMessage>() }
     val listState = rememberLazyListState()
+    val uiState by viewModel.uiState.collectAsState()
+
+    val messages = (uiState as? ChatUiState.Success)?.chatResponses?.mapNotNull { it.message } ?: emptyList()
+
+    LaunchedEffect(messages.size) {
+        if (messages.isNotEmpty()) {
+            listState.animateScrollToItem(messages.size - 1)
+        }
+    }
 
     fun toggleDrawer() {
         scope.launch {
@@ -67,17 +78,8 @@ fun ChatPage(
     fun sendMessage() {
         val text = textFieldState.text.toString().trim()
         if (text.isNotEmpty()) {
-            messages.add(ChatMessage(text = text, isUser = true))
+            viewModel.sendMessage(text)
             textFieldState.clearText()
-            
-            // Fake AI response
-            scope.launch {
-                delay(1000)
-                messages.add(ChatMessage(
-                    text = "I'm Kollama, your AI assistant. You said: \"$text\". How can I further assist you?",
-                    isUser = false
-                ))
-            }
         }
     }
 
@@ -124,19 +126,33 @@ fun ChatPage(
                         .weight(1f)
                         .fillMaxWidth()
                 ) {
-                    if (messages.isEmpty()) {
-                        WelcomeScreen(
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    } else {
-                        LazyColumn(
-                            state = listState,
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            items(messages) { message ->
-                                ChatBubble(message = message)
+                    when (val state = uiState) {
+                        is ChatUiState.Loading -> {
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator()
+                            }
+                        }
+                        is ChatUiState.Error -> {
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                Text(text = state.message, color = MaterialTheme.colorScheme.error)
+                            }
+                        }
+                        is ChatUiState.Success -> {
+                            if (messages.isEmpty()) {
+                                WelcomeScreen(
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            } else {
+                                LazyColumn(
+                                    state = listState,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentPadding = PaddingValues(16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    itemsIndexed(messages) { _, message ->
+                                        ChatBubble(message = message)
+                                    }
+                                }
                             }
                         }
                     }

@@ -10,8 +10,4 @@ interface ModelsRepository {
     suspend fun getModels() : List<OllamaModel>
 
     suspend fun getStatus() : Boolean
-
-    suspend fun chat(chatRequest: ChatRequest): ChatResponse
-
-    suspend fun chatStream(chatRequest: ChatRequest): Flow<ChatResponse>
 }
