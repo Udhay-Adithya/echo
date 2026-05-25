@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerState
@@ -60,7 +61,9 @@ fun ChatPage(
     val listState = rememberLazyListState()
     val uiState by viewModel.uiState.collectAsState()
 
-    val messages = (uiState as? ChatUiState.Success)?.chatResponses?.mapNotNull { it.message } ?: emptyList()
+    val messages = (uiState as? ChatUiState.Success)?.chatResponses
+        ?.mapNotNull { it.message }
+        ?.filter { it.content?.isNotBlank() == true } ?: emptyList()
 
     LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) {
