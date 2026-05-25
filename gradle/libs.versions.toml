@@ -22,7 +22,7 @@ roomRuntime = "2.8.4"
 runtime = "1.10.6"
 material3 = "1.4.0"
 koin-plugin = "1.0.0-RC2"
-markdown-renderer = "0.41.0"
+jetbrains-markdown = "0.7.3"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -57,8 +57,7 @@ material-kolor = { module = "com.materialkolor:material-kolor", version.ref = "m
 androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 ollama-kotlin = { module = "io.github.udhay-adithya:ollama-kotlin", version.ref = "ollamaKotlin" }
 room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomKtx" }
-multiplatform-markdown-renderer-m3 = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version.ref = "markdown-renderer" }
-multiplatform-markdown-renderer-code = { module = "com.mikepenz:multiplatform-markdown-renderer-code", version.ref = "markdown-renderer" }
+jetbrains-markdown = { module = "org.jetbrains:markdown", version.ref = "jetbrains-markdown" }
 
 
 [plugins]
