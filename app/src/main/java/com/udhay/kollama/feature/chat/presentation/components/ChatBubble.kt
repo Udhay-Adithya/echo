@@ -17,9 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.mikepenz.markdown.m3.Markdown
-import com.mikepenz.markdown.m3.markdownColor
-import com.mikepenz.markdown.m3.markdownTypography
 import com.udhay.kollama.R
 import com.udhay.kollama.core.ui.theme.KollamaTheme
 import org.udhay.ollama.api.Message
@@ -62,16 +59,10 @@ fun ChatBubble(message: Message) {
                 shape = shape,
                 modifier = Modifier.fillMaxWidth(0.75f)
             ) {
-                Markdown(
+                KollamaMarkdown(
                     content = content,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                    colors = markdownColor(
-                        text = contentColor,
-                    ),
-                    typography = markdownTypography(
-                        text = MaterialTheme.typography.bodyLarge,
-                        paragraph = MaterialTheme.typography.bodyLarge
-                    )
+                    contentColor = contentColor
                 )
             }
         }
