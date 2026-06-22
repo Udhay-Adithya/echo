@@ -1,12 +1,14 @@
 package com.udhay.kollama.feature.chat.presentation.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -49,21 +51,25 @@ fun ChatBubble(message: Message) {
     }
 
     Column {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = arrangement
-        ) {
-            Surface(
-                color = containerColor,
-                contentColor = contentColor,
-                shape = shape,
-                modifier = Modifier.fillMaxWidth(0.75f)
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            val bubbleMaxWidth = maxWidth * 0.75f
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = arrangement
             ) {
-                KollamaMarkdown(
-                    content = content,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                    contentColor = contentColor
-                )
+                Surface(
+                    color = containerColor,
+                    contentColor = contentColor,
+                    shape = shape,
+                    modifier = Modifier.widthIn(max = bubbleMaxWidth)
+                ) {
+                    KollamaMarkdown(
+                        content = content,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                        contentColor = contentColor
+                    )
+                }
             }
         }
 
