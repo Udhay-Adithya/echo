@@ -11,6 +11,7 @@ activityCompose = "1.13.0"
 kotlin = "2.3.20"
 composeBom = "2026.03.01"
 materialKolor = "4.1.1"
+multiplatformMarkdownRendererAndroid = "0.42.0"
 nav3Core = "1.1.0"
 lifecycleViewmodelNav3 = "2.11.0-alpha03"
 kotlinSerialization = "2.3.20"
@@ -22,7 +23,6 @@ roomRuntime = "2.8.4"
 runtime = "1.10.6"
 material3 = "1.4.0"
 koin-plugin = "1.0.0-RC2"
-jetbrains-markdown = "0.7.3"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -55,9 +55,9 @@ androidx-material3-adaptive-navigation3 = { group = "androidx.compose.material3.
 androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
 material-kolor = { module = "com.materialkolor:material-kolor", version.ref = "materialKolor" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
+multiplatform-markdown-renderer-android = { module = "com.mikepenz:multiplatform-markdown-renderer-android", version.ref = "multiplatformMarkdownRendererAndroid" }
 ollama-kotlin = { module = "io.github.udhay-adithya:ollama-kotlin", version.ref = "ollamaKotlin" }
 room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomKtx" }
-jetbrains-markdown = { module = "org.jetbrains:markdown", version.ref = "jetbrains-markdown" }
 
 
 [plugins]

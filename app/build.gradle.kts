@@ -84,6 +84,6 @@ dependencies {
     implementation(libs.ollama.kotlin)
 
     // Markdown
-    implementation(libs.jetbrains.markdown)
+    implementation(libs.multiplatform.markdown.renderer.android)
 
 }
