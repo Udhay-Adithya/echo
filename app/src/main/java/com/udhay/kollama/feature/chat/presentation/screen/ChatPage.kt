@@ -35,8 +35,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.udhay.kollama.R
+import com.udhay.kollama.core.ui.common.Loader
 import com.udhay.kollama.core.ui.theme.KollamaTheme
-import com.udhay.kollama.feature.chat.presentation.components.AssistantLoaderBubble
 import com.udhay.kollama.feature.chat.presentation.components.ChatBubble
 import com.udhay.kollama.feature.chat.presentation.components.ChatDrawer
 import com.udhay.kollama.feature.chat.presentation.components.ChatInputBar
@@ -146,7 +146,10 @@ fun ChatPage(
 
                             if (showLoaderBubble) {
                                 item {
-                                    AssistantLoaderBubble()
+                                    Loader(
+                                        fill = false,
+                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+                                    )
                                 }
                             }
                         }
