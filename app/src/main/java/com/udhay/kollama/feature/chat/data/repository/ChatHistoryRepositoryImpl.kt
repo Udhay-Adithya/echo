@@ -37,6 +37,10 @@ class ChatHistoryRepositoryImpl(
         dao.touchChat(chatId, updatedAt)
     }
 
+    override suspend fun updateChatTitle(chatId: String, title: String) {
+        dao.updateChatTitle(chatId, title)
+    }
+
     override suspend fun deleteChat(chatId: String) {
         dao.deleteChat(chatId)
     }

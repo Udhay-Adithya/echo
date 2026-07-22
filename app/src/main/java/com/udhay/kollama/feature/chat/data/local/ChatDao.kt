@@ -22,6 +22,9 @@ interface ChatDao {
     @Query("UPDATE chats SET updatedAt = :updatedAt WHERE id = :chatId")
     suspend fun touchChat(chatId: String, updatedAt: Long)
 
+    @Query("UPDATE chats SET title = :title WHERE id = :chatId")
+    suspend fun updateChatTitle(chatId: String, title: String)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMessage(message: ChatMessageEntity)
 

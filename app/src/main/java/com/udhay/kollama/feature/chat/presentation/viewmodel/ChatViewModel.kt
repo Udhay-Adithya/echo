@@ -9,10 +9,12 @@ import com.udhay.kollama.feature.chat.domain.model.ChatMessageMetadata
 import com.udhay.kollama.feature.chat.domain.usecase.ChatWithModelStreamUseCase
 import com.udhay.kollama.feature.chat.domain.usecase.CreateChatUseCase
 import com.udhay.kollama.feature.chat.domain.usecase.DeleteChatUseCase
+import com.udhay.kollama.feature.chat.domain.usecase.GenerateChatTitleUseCase
 import com.udhay.kollama.feature.chat.domain.usecase.ObserveChatMessagesUseCase
 import com.udhay.kollama.feature.chat.domain.usecase.ObserveChatsUseCase
 import com.udhay.kollama.feature.chat.domain.usecase.SaveChatMessageUseCase
 import com.udhay.kollama.feature.chat.domain.usecase.TruncateChatFromUseCase
+import com.udhay.kollama.feature.chat.domain.usecase.UpdateChatTitleUseCase
 import com.udhay.kollama.feature.chat.presentation.state.ChatUiState
 import com.udhay.kollama.feature.settings.domain.model.UserSettings
 import com.udhay.kollama.feature.settings.domain.usecase.GetUserSettingsUseCase
@@ -45,6 +47,8 @@ class ChatViewModel(
     private val saveChatMessageUseCase: SaveChatMessageUseCase,
     private val deleteChatUseCase: DeleteChatUseCase,
     private val truncateChatFromUseCase: TruncateChatFromUseCase,
+    private val generateChatTitleUseCase: GenerateChatTitleUseCase,
+    private val updateChatTitleUseCase: UpdateChatTitleUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChatUiState())
@@ -67,8 +71,10 @@ class ChatViewModel(
 
             // Ensure a chat exists (persisted mode only) before attaching messages.
             var chatId = _uiState.value.currentChatId
+            var startedNewChat = false
             if (!isIncognito && chatId == null) {
                 chatId = UUID.randomUUID().toString()
+                startedNewChat = true
                 val now = System.currentTimeMillis()
                 createChatUseCase(
                     Chat(id = chatId, title = titleFrom(trimmed), createdAt = now, updatedAt = now)
@@ -91,6 +97,10 @@ class ChatViewModel(
             if (model.isNullOrBlank()) {
                 _uiState.update { it.copy(error = "No model selected") }
                 return@launch
+            }
+
+            if (startedNewChat && chatId != null) {
+                generateTitleAsync(chatId, model, trimmed)
             }
 
             streamAssistantReply(model, settings, effectiveChatId, isIncognito)
@@ -236,6 +246,16 @@ class ChatViewModel(
         val chatId = _uiState.value.currentChatId
         if (chatId != null && !_uiState.value.isIncognito) {
             viewModelScope.launch { truncateChatFromUseCase(chatId, message.createdAt) }
+        }
+    }
+
+    /** Fire-and-forget: replace the provisional truncated title with a model-generated one. */
+    private fun generateTitleAsync(chatId: String, model: String, firstMessage: String) {
+        viewModelScope.launch {
+            val title = runCatching { generateChatTitleUseCase(model, firstMessage) }.getOrNull()
+            if (!title.isNullOrBlank()) {
+                updateChatTitleUseCase(chatId, title.take(TITLE_MAX_LENGTH))
+            }
         }
     }
 

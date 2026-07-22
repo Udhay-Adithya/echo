@@ -23,6 +23,8 @@ interface ChatHistoryRepository {
 
     suspend fun touchChat(chatId: String, updatedAt: Long)
 
+    suspend fun updateChatTitle(chatId: String, title: String)
+
     suspend fun deleteChat(chatId: String)
 
     /** Deletes every message in [chatId] created at or after [fromCreatedAt] (edit/regenerate). */

@@ -7,6 +7,8 @@ import org.koin.core.annotation.Single
 import org.udhay.ollama.OllamaClient
 import org.udhay.ollama.api.ChatRequest
 import org.udhay.ollama.api.ChatResponse
+import org.udhay.ollama.api.GenerateRequest
+import org.udhay.ollama.api.GenerateResponse
 
 @Single
 class ChatRepositoryImpl(
@@ -25,6 +27,14 @@ class ChatRepositoryImpl(
             ollamaClient.chatStream(chatRequest)
         } catch (e: Exception) {
             emptyFlow<ChatResponse>()
+        }
+    }
+
+    override suspend fun generate(request: GenerateRequest): GenerateResponse {
+        return try {
+            ollamaClient.generate(request)
+        } catch (e: Exception) {
+            GenerateResponse()
         }
     }
 }
