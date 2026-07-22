@@ -20,6 +20,7 @@ data class UserSettingsEntity(
     // Theme
     val darkModeEnabled: Boolean = false,
     val amoledPaletteEnabled: Boolean = false,
+    val fontScale: Float = 1f,
 
     // Model selection
     val selectedModel: OllamaModel? = null,

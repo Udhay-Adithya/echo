@@ -8,6 +8,7 @@ data class UserSettings(
     val personalPreferences: String = "I prefer concise answers",
     val darkModeEnabled: Boolean = false,
     val amoledPaletteEnabled: Boolean = false,
+    val fontScale: Float = 1f,
     val selectedModel: OllamaModel? = null,
     val serverHost: String = "http://localhost:11434",
     val serverHeaders: Map<String, String> = emptyMap(),

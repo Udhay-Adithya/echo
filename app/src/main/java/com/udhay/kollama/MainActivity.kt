@@ -26,7 +26,8 @@ class MainActivity : ComponentActivity() {
 
             KollamaTheme(
                 darkTheme = isDark,
-                isAmoled = settings.amoledPaletteEnabled
+                isAmoled = settings.amoledPaletteEnabled,
+                fontScale = settings.fontScale
             ) {
                 val view = this@MainActivity.window.decorView
 
