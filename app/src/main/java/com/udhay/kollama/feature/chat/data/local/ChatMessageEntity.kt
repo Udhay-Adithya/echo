@@ -31,6 +31,10 @@ data class ChatMessageEntity(
     val thinking: String? = null,
     val images: List<String>? = null,
 
+    // Tool calling (toolCalls serialized as JSON)
+    val toolCallsJson: String? = null,
+    val toolName: String? = null,
+
     // Flattened assistant metadata (null for user messages)
     val model: String? = null,
     val totalDuration: Long? = null,

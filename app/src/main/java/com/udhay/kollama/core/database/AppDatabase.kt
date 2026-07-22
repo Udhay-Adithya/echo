@@ -10,14 +10,17 @@ import com.udhay.kollama.feature.chat.data.local.ChatEntity
 import com.udhay.kollama.feature.chat.data.local.ChatMessageEntity
 import com.udhay.kollama.feature.settings.data.local.UserSettingsEntity
 import com.udhay.kollama.feature.settings.data.local.UserSettingsDao
+import com.udhay.kollama.feature.tools.data.local.ToolDao
+import com.udhay.kollama.feature.tools.data.local.ToolEntity
 
 @Database(
     entities = [
         UserSettingsEntity::class,
         ChatEntity::class,
-        ChatMessageEntity::class
+        ChatMessageEntity::class,
+        ToolEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -26,6 +29,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun userSettingsDao(): UserSettingsDao
 
     abstract fun chatDao(): ChatDao
+
+    abstract fun toolDao(): ToolDao
 
     companion object {
         fun create(context: Context): AppDatabase =

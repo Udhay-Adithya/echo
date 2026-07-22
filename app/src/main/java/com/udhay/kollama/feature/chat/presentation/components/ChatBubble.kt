@@ -16,6 +16,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,12 +40,19 @@ import org.udhay.ollama.api.MessageRole
 fun ChatBubble(
     message: ChatMessage,
     modifier: Modifier = Modifier,
-    onEdit: (ChatMessage) -> Unit = {}
+    onEdit: (ChatMessage) -> Unit = {},
+    onSubmitToolResult: (toolName: String, result: String) -> Unit = { _, _ -> }
 ) {
+    if (message.role == MessageRole.Tool) {
+        ToolResultBubble(message, modifier)
+        return
+    }
+
     val content = message.content
     val images = message.images.orEmpty()
+    val toolCalls = message.toolCalls.orEmpty()
     val hasBubbleBody = content.isNotBlank() || images.isNotEmpty()
-    if (!hasBubbleBody && message.thinking.isNullOrBlank()) return
+    if (!hasBubbleBody && message.thinking.isNullOrBlank() && toolCalls.isEmpty()) return
 
     val isUser = message.role == MessageRole.User
     val clipboard = LocalClipboardManager.current
@@ -116,6 +124,15 @@ fun ChatBubble(
             }
         }
 
+        toolCalls.forEach { toolCall ->
+            Spacer(modifier = Modifier.height(if (hasBubbleBody) 6.dp else 0.dp))
+            ToolCallCard(
+                toolCall = toolCall,
+                onSubmitResult = { result -> onSubmitToolResult(toolCall.name, result) },
+                modifier = Modifier.fillMaxWidth(0.9f)
+            )
+        }
+
         if (hasBubbleBody && !message.isStreaming) {
             Spacer(modifier = Modifier.height(6.dp))
 
@@ -158,6 +175,33 @@ fun ChatBubble(
             message = message,
             onDismiss = { showInfo = false }
         )
+    }
+}
+
+@Composable
+private fun ToolResultBubble(message: ChatMessage, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Start
+    ) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surfaceContainer,
+            modifier = Modifier.fillMaxWidth(0.9f)
+        ) {
+            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) {
+                Text(
+                    text = "Tool result" + (message.toolName?.let { " · $it" } ?: ""),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = message.content,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        }
     }
 }
 

@@ -1,6 +1,7 @@
 package com.udhay.kollama.feature.chat.presentation.state
 
 import com.udhay.kollama.feature.chat.domain.model.ChatMessage
+import org.udhay.ollama.api.MessageRole
 
 /**
  * Single immutable snapshot of the chat screen.
@@ -23,16 +24,21 @@ data class ChatUiState(
 /** Messages that have something worth rendering (hides the fully-blank streaming placeholder). */
 val ChatUiState.visibleMessages: List<ChatMessage>
     get() = messages.filter {
-        it.content.isNotBlank() || !it.images.isNullOrEmpty() || !it.thinking.isNullOrBlank()
+        it.content.isNotBlank() ||
+                !it.images.isNullOrEmpty() ||
+                !it.thinking.isNullOrBlank() ||
+                !it.toolCalls.isNullOrEmpty() ||
+                it.role == MessageRole.Tool
     }
 
 /**
  * Show a standalone loader bubble only while we wait for the first signal of a reply —
- * i.e. no content and no streamed reasoning yet.
+ * i.e. no content, reasoning or tool call yet.
  */
 val ChatUiState.shouldShowAssistantLoader: Boolean
     get() = messages.any {
-        it.isStreaming && it.content.isBlank() && it.thinking.isNullOrBlank()
+        it.isStreaming && it.content.isBlank() &&
+                it.thinking.isNullOrBlank() && it.toolCalls.isNullOrEmpty()
     }
 
 /** Disable the input bar while a reply is in flight. */

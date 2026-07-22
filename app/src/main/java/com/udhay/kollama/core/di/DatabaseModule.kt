@@ -4,6 +4,7 @@ import android.content.Context
 import com.udhay.kollama.core.database.AppDatabase
 import com.udhay.kollama.feature.chat.data.local.ChatDao
 import com.udhay.kollama.feature.settings.data.local.UserSettingsDao
+import com.udhay.kollama.feature.tools.data.local.ToolDao
 import org.koin.core.annotation.Module
 import org.koin.core.annotation.Single
 
@@ -20,4 +21,8 @@ class DatabaseModule {
     @Single
     fun provideChatDao(db: AppDatabase): ChatDao =
         db.chatDao()
+
+    @Single
+    fun provideToolDao(db: AppDatabase): ToolDao =
+        db.toolDao()
 }

@@ -194,6 +194,9 @@ fun ChatPage(
                                     onEdit = { edited ->
                                         textFieldState.setTextAndPlaceCursorAtEnd(edited.content)
                                         viewModel.prepareEdit(edited)
+                                    },
+                                    onSubmitToolResult = { toolName, result ->
+                                        viewModel.submitToolResult(toolName, result)
                                     }
                                 )
                             }

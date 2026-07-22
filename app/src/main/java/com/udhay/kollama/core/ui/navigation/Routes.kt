@@ -7,4 +7,5 @@ sealed class Routes() {
     object ConnectionSettings: Routes()
     object ModelSettings: Routes()
     object ModelManagement: Routes()
+    object Tools: Routes()
 }

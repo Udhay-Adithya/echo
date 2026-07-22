@@ -18,5 +18,8 @@ data class ChatMessage(
     val images: List<String>? = null,
     val isStreaming: Boolean = false,
     val metadata: ChatMessageMetadata? = null,
+    // Tool calling
+    val toolCalls: List<ToolCallInfo>? = null,
+    val toolName: String? = null,
     val createdAt: Long = System.currentTimeMillis()
 )

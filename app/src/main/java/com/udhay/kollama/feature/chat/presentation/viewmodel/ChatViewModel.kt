@@ -16,9 +16,13 @@ import com.udhay.kollama.feature.chat.domain.usecase.ObserveChatsUseCase
 import com.udhay.kollama.feature.chat.domain.usecase.SaveChatMessageUseCase
 import com.udhay.kollama.feature.chat.domain.usecase.TruncateChatFromUseCase
 import com.udhay.kollama.feature.chat.domain.usecase.UpdateChatTitleUseCase
+import com.udhay.kollama.feature.chat.domain.model.ToolCallInfo
 import com.udhay.kollama.feature.chat.presentation.state.ChatUiState
 import com.udhay.kollama.feature.settings.domain.model.UserSettings
 import com.udhay.kollama.feature.settings.domain.usecase.GetUserSettingsUseCase
+import com.udhay.kollama.feature.tools.data.model.toApiTool
+import com.udhay.kollama.feature.tools.domain.usecase.GetEnabledToolsUseCase
+import org.udhay.ollama.api.Tool
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -51,6 +55,7 @@ class ChatViewModel(
     private val generateChatTitleUseCase: GenerateChatTitleUseCase,
     private val updateChatTitleUseCase: UpdateChatTitleUseCase,
     private val getModelCapabilitiesUseCase: GetModelCapabilitiesUseCase,
+    private val getEnabledToolsUseCase: GetEnabledToolsUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChatUiState())
@@ -111,6 +116,38 @@ class ChatViewModel(
         }
     }
 
+    /**
+     * Feeds a tool's result back to the model (role = tool) so it can continue the turn.
+     * The caller supplies the result manually since tool execution happens outside the app.
+     */
+    fun submitToolResult(toolName: String, result: String) {
+        if (result.isBlank() || _uiState.value.isStreaming) return
+
+        viewModelScope.launch {
+            val settings = getUserSettingsUseCase().first()
+            val isIncognito = _uiState.value.isIncognito
+            val chatId = _uiState.value.currentChatId ?: INCOGNITO_CHAT_ID
+
+            val toolMessage = ChatMessage(
+                id = UUID.randomUUID().toString(),
+                chatId = chatId,
+                role = MessageRole.Tool,
+                content = result.trim(),
+                toolName = toolName,
+                createdAt = System.currentTimeMillis()
+            )
+            _uiState.update { it.copy(messages = it.messages + toolMessage, error = null) }
+            if (!isIncognito) saveChatMessageUseCase(toolMessage)
+
+            val model = settings.selectedModel?.model
+            if (model.isNullOrBlank()) {
+                _uiState.update { it.copy(error = "No model selected") }
+                return@launch
+            }
+            streamAssistantReply(model, settings, chatId, isIncognito)
+        }
+    }
+
     private suspend fun streamAssistantReply(
         model: String,
         settings: UserSettings,
@@ -137,21 +174,23 @@ class ChatViewModel(
             )
         }
 
-        val supportsThinking = when {
-            !settings.thinkingEnabled -> false
-            settings.selectedModel == null -> false
-            settings.selectedModel.capabilities.isNotEmpty() ->
-                settings.selectedModel.capabilities.contains("thinking")
+        val capabilities = when {
+            settings.selectedModel == null -> emptyList()
+            settings.selectedModel.capabilities.isNotEmpty() -> settings.selectedModel.capabilities
             // Legacy selection without cached capabilities — resolve once.
-            else -> runCatching { getModelCapabilitiesUseCase(model) }
-                .getOrDefault(emptyList()).contains("thinking")
+            else -> runCatching { getModelCapabilitiesUseCase(model) }.getOrDefault(emptyList())
         }
+        val supportsThinking = settings.thinkingEnabled && capabilities.contains("thinking")
+        val tools: List<Tool>? = if (capabilities.contains("tools")) {
+            getEnabledToolsUseCase().takeIf { it.isNotEmpty() }?.map { it.toApiTool() }
+        } else null
 
         chatWithModelStreamUseCase(
             ChatRequest(
                 model = model,
                 messages = requestMessages,
                 stream = true,
+                tools = tools,
                 think = if (supportsThinking) JsonPrimitive(true) else null,
                 options = buildOptions(settings),
                 keepAlive = settings.keepAlive?.takeIf { it.isNotBlank() }?.let { JsonPrimitive(it) }
@@ -167,6 +206,10 @@ class ChatViewModel(
         }.collect { response ->
             val chunk = response.message?.content.orEmpty()
             val thinkingChunk = response.thinking.orEmpty()
+            val toolCalls = response.message?.toolCalls?.mapNotNull { tc ->
+                val name = tc.function?.name ?: return@mapNotNull null
+                ToolCallInfo(name = name, arguments = tc.function?.arguments?.toString() ?: "{}")
+            }
             _uiState.update { state ->
                 state.copy(
                     messages = state.messages.map { m ->
@@ -174,6 +217,7 @@ class ChatViewModel(
                         else m.copy(
                             content = m.content + chunk,
                             thinking = (m.thinking.orEmpty() + thinkingChunk).ifBlank { null },
+                            toolCalls = if (!toolCalls.isNullOrEmpty()) toolCalls else m.toolCalls,
                             metadata = if (response.done == true) response.toMetadata() else m.metadata
                         )
                     }
@@ -187,7 +231,9 @@ class ChatViewModel(
     private suspend fun finalizeAssistantReply(assistantId: String, isIncognito: Boolean) {
         val finalMessage = _uiState.value.messages.firstOrNull { it.id == assistantId }
 
-        if (finalMessage == null || finalMessage.content.isBlank()) {
+        if (finalMessage == null ||
+            (finalMessage.content.isBlank() && finalMessage.toolCalls.isNullOrEmpty())
+        ) {
             // Repository swallows network failures into an empty stream, so a blank
             // reply here means the request never reached the model.
             _uiState.update {

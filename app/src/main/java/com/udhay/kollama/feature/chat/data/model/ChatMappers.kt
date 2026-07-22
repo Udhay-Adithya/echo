@@ -5,8 +5,15 @@ import com.udhay.kollama.feature.chat.data.local.ChatMessageEntity
 import com.udhay.kollama.feature.chat.domain.model.Chat
 import com.udhay.kollama.feature.chat.domain.model.ChatMessage
 import com.udhay.kollama.feature.chat.domain.model.ChatMessageMetadata
+import com.udhay.kollama.feature.chat.domain.model.ToolCallInfo
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.udhay.ollama.api.Message
 import org.udhay.ollama.api.MessageRole
+import org.udhay.ollama.api.ToolCall
+import org.udhay.ollama.api.ToolCallFunction
+
+private val mapperJson = Json { ignoreUnknownKeys = true }
 
 fun ChatEntity.toDomain() = Chat(
     id = id,
@@ -41,6 +48,10 @@ fun ChatMessageEntity.toDomain() = ChatMessage(
             evalDuration = evalDuration
         )
     } else null,
+    toolCalls = toolCallsJson?.let {
+        runCatching { mapperJson.decodeFromString<List<ToolCallInfo>>(it) }.getOrNull()
+    },
+    toolName = toolName,
     createdAt = createdAt
 )
 
@@ -51,6 +62,8 @@ fun ChatMessage.toEntity() = ChatMessageEntity(
     content = content,
     thinking = thinking,
     images = images,
+    toolCallsJson = toolCalls?.let { mapperJson.encodeToString(it) },
+    toolName = toolName,
     model = metadata?.model,
     totalDuration = metadata?.totalDuration,
     loadDuration = metadata?.loadDuration,
@@ -68,5 +81,15 @@ private fun ChatMessageEntity.hasMetadata(): Boolean =
 fun ChatMessage.toApiMessage() = Message(
     role = role,
     content = content,
-    images = images
+    images = images,
+    toolName = toolName,
+    toolCalls = toolCalls?.map { call ->
+        ToolCall(
+            type = "function",
+            function = ToolCallFunction(
+                name = call.name,
+                arguments = runCatching { mapperJson.parseToJsonElement(call.arguments) }.getOrNull()
+            )
+        )
+    }
 )

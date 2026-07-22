@@ -12,6 +12,7 @@ import com.udhay.kollama.feature.settings.presentation.screen.ConnectionSettings
 import com.udhay.kollama.feature.settings.presentation.screen.ModelSettingsPage
 import com.udhay.kollama.feature.settings.presentation.screen.PersonalizationPage
 import com.udhay.kollama.feature.settings.presentation.screen.SettingsPage
+import com.udhay.kollama.feature.tools.presentation.screen.ToolsPage
 
 @Composable
 fun AppNavHost(
@@ -47,7 +48,8 @@ fun AppNavHost(
                         onNavigateToPersonalization = { navigateTo(Routes.Personalization) },
                         onNavigateToConnectionSettings = { navigateTo(Routes.ConnectionSettings) },
                         onNavigateToModelSettings = { navigateTo(Routes.ModelSettings) },
-                        onNavigateToModelManagement = { navigateTo(Routes.ModelManagement) }
+                        onNavigateToModelManagement = { navigateTo(Routes.ModelManagement) },
+                        onNavigateToTools = { navigateTo(Routes.Tools) }
                     )
                 }
 
@@ -71,6 +73,12 @@ fun AppNavHost(
 
                 is Routes.ModelManagement -> NavEntry(key) {
                     ModelManagementPage(
+                        onNavigateBack = { popBack() }
+                    )
+                }
+
+                is Routes.Tools -> NavEntry(key) {
+                    ToolsPage(
                         onNavigateBack = { popBack() }
                     )
                 }
