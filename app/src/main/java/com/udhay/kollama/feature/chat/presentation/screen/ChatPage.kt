@@ -1,9 +1,11 @@
 package com.udhay.kollama.feature.chat.presentation.screen
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,9 +14,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
@@ -23,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
@@ -31,9 +37,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.udhay.kollama.R
 import com.udhay.kollama.core.ui.common.Loader
 import com.udhay.kollama.core.ui.theme.KollamaTheme
@@ -60,16 +68,22 @@ fun ChatPage(
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
     val uiState by viewModel.uiState.collectAsState()
+    val chats by viewModel.chats.collectAsStateWithLifecycle()
 
     val visibleMessages = uiState.visibleMessages
     val showLoaderBubble = uiState.shouldShowAssistantLoader
-    val visibleItemCount = visibleMessages.size + if (showLoaderBubble) 1 else 0
+    val hasError = uiState.error != null
+    val visibleItemCount = visibleMessages.size +
+            (if (showLoaderBubble) 1 else 0) +
+            (if (hasError) 1 else 0)
 
     LaunchedEffect(visibleItemCount) {
         if (visibleItemCount > 0) {
             listState.animateScrollToItem(visibleItemCount - 1)
         }
     }
+
+    fun closeDrawer() = scope.launch { drawerState.close() }
 
     fun toggleDrawer() {
         scope.launch {
@@ -87,15 +101,26 @@ fun ChatPage(
     }
 
     ChatDrawer(
+        drawerState = drawerState,
         onOpenSettings = onOpenSettings,
-        drawerState = drawerState
+        chats = chats,
+        currentChatId = uiState.currentChatId,
+        onChatClick = { chatId ->
+            viewModel.loadChat(chatId)
+            closeDrawer()
+        },
+        onDeleteChat = { chatId -> viewModel.deleteChat(chatId) },
+        onNewChat = {
+            viewModel.newChat()
+            closeDrawer()
+        }
     ) {
         Scaffold(
             topBar = {
                 CenterAlignedTopAppBar(
                     title = {
                         Text(
-                            text = "Kollama",
+                            text = if (uiState.isIncognito) "Incognito" else "Kollama",
                             style = MaterialTheme.typography.titleMedium
                         )
                     },
@@ -108,10 +133,20 @@ fun ChatPage(
                         }
                     },
                     actions = {
-                        IconButton(onClick = {}) {
+                        val incognitoActive = uiState.isIncognito
+                        IconButton(
+                            onClick = { viewModel.toggleIncognito() },
+                            modifier = Modifier.background(
+                                color = if (incognitoActive) MaterialTheme.colorScheme.primary
+                                else Color.Transparent,
+                                shape = CircleShape
+                            )
+                        ) {
                             Icon(
                                 painter = painterResource(R.drawable.incognito_24px),
-                                contentDescription = "Incognito"
+                                contentDescription = "Incognito",
+                                tint = if (incognitoActive) MaterialTheme.colorScheme.onPrimary
+                                else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -124,12 +159,16 @@ fun ChatPage(
                     .padding(paddingValues)
                     .consumeWindowInsets(paddingValues)
             ) {
+                if (uiState.isIncognito) {
+                    IncognitoBanner(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+                }
+
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
                 ) {
-                    if (visibleMessages.isEmpty() && !showLoaderBubble) {
+                    if (visibleMessages.isEmpty() && !showLoaderBubble && !hasError) {
                         WelcomeScreen(
                             modifier = Modifier.fillMaxSize()
                         )
@@ -140,8 +179,17 @@ fun ChatPage(
                             contentPadding = PaddingValues(16.dp),
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            itemsIndexed(visibleMessages) { _, message ->
-                                ChatBubble(message = message)
+                            itemsIndexed(
+                                items = visibleMessages,
+                                key = { _, message -> message.id }
+                            ) { _, message ->
+                                ChatBubble(
+                                    message = message,
+                                    onEdit = { edited ->
+                                        textFieldState.setTextAndPlaceCursorAtEnd(edited.content)
+                                        viewModel.prepareEdit(edited)
+                                    }
+                                )
                             }
 
                             if (showLoaderBubble) {
@@ -150,6 +198,12 @@ fun ChatPage(
                                         fill = false,
                                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
                                     )
+                                }
+                            }
+
+                            uiState.error?.let { error ->
+                                item {
+                                    ErrorBubble(message = error)
                                 }
                             }
                         }
@@ -163,10 +217,50 @@ fun ChatPage(
                         .fillMaxWidth()
                         .imePadding()
                         .padding(16.dp)
-
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun IncognitoBanner(modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.incognito_24px),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = "Incognito mode — this chat is temporary and won't be saved.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 12.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun ErrorBubble(message: String) {
+    Surface(
+        shape = RoundedCornerShape(20.dp, 20.dp, 20.dp, 4.dp),
+        color = MaterialTheme.colorScheme.errorContainer,
+        contentColor = MaterialTheme.colorScheme.onErrorContainer
+    ) {
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+        )
     }
 }
 

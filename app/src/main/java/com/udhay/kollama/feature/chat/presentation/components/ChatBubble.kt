@@ -15,20 +15,33 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.udhay.kollama.R
 import com.udhay.kollama.core.ui.theme.KollamaTheme
-import org.udhay.ollama.api.Message
+import com.udhay.kollama.feature.chat.domain.model.ChatMessage
 import org.udhay.ollama.api.MessageRole
 
 @Composable
-fun ChatBubble(message: Message) {
-    val content = message.content ?: return
+fun ChatBubble(
+    message: ChatMessage,
+    modifier: Modifier = Modifier,
+    onEdit: (ChatMessage) -> Unit = {}
+) {
+    val content = message.content
+    if (content.isBlank()) return
 
     val isUser = message.role == MessageRole.User
+    val clipboard = LocalClipboardManager.current
+    var showInfo by remember { mutableStateOf(false) }
 
     val arrangement = if (isUser) Arrangement.End else Arrangement.Start
 
@@ -50,7 +63,7 @@ fun ChatBubble(message: Message) {
         MaterialTheme.colorScheme.onSurface
     }
 
-    Column {
+    Column(modifier = modifier) {
         BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
             val bubbleMaxWidth = maxWidth * 0.75f
 
@@ -82,21 +95,23 @@ fun ChatBubble(message: Message) {
             horizontalArrangement = arrangement
         ) {
             Row {
-                IconButton(onClick = { /* copy */ }) {
+                IconButton(onClick = { clipboard.setText(AnnotatedString(content)) }) {
                     Icon(
                         painter = painterResource(R.drawable.content_copy_24px),
                         contentDescription = "Copy message"
                     )
                 }
 
-                IconButton(onClick = { /* edit */ }) {
-                    Icon(
-                        painter = painterResource(R.drawable.edit_square_24px),
-                        contentDescription = "Edit message"
-                    )
+                if (isUser) {
+                    IconButton(onClick = { onEdit(message) }) {
+                        Icon(
+                            painter = painterResource(R.drawable.edit_square_24px),
+                            contentDescription = "Edit message"
+                        )
+                    }
                 }
 
-                IconButton(onClick = { /* info */ }) {
+                IconButton(onClick = { showInfo = true }) {
                     Icon(
                         painter = painterResource(R.drawable.info_24px),
                         contentDescription = "Message info"
@@ -104,6 +119,13 @@ fun ChatBubble(message: Message) {
                 }
             }
         }
+    }
+
+    if (showInfo) {
+        MessageInfoBottomSheet(
+            message = message,
+            onDismiss = { showInfo = false }
+        )
     }
 }
 
@@ -113,13 +135,17 @@ private fun ChatBubbleMarkdownPreview() {
     KollamaTheme {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             ChatBubble(
-                message = Message(
+                message = ChatMessage(
+                    id = "1",
+                    chatId = "c",
                     role = MessageRole.User,
                     content = "Hello! **This is bold** and *this is italic*."
                 )
             )
             ChatBubble(
-                message = Message(
+                message = ChatMessage(
+                    id = "2",
+                    chatId = "c",
                     role = MessageRole.Assistant,
                     content = """
                         Here is some code:

@@ -17,3 +17,11 @@ fun formatDate(dateString: String?): String {
         dateString
     }
 }
+
+/** Groups chats in the drawer, e.g. "Jul 2026". */
+fun monthYearLabel(millis: Long): String =
+    SimpleDateFormat("MMM yyyy", Locale.getDefault()).format(Date(millis))
+
+/** Full timestamp for the message info sheet, e.g. "22 Jul 2026, 03:14 PM". */
+fun formatTimestamp(millis: Long): String =
+    SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault()).format(Date(millis))
