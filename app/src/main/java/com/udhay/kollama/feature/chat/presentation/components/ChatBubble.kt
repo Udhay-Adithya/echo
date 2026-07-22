@@ -1,5 +1,6 @@
 package com.udhay.kollama.feature.chat.presentation.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,6 +22,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
@@ -27,6 +31,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.udhay.kollama.R
 import com.udhay.kollama.core.ui.theme.KollamaTheme
+import com.udhay.kollama.core.utils.decodeBase64ToImageBitmap
 import com.udhay.kollama.feature.chat.domain.model.ChatMessage
 import org.udhay.ollama.api.MessageRole
 
@@ -37,7 +42,8 @@ fun ChatBubble(
     onEdit: (ChatMessage) -> Unit = {}
 ) {
     val content = message.content
-    if (content.isBlank()) return
+    val images = message.images.orEmpty()
+    if (content.isBlank() && images.isEmpty()) return
 
     val isUser = message.role == MessageRole.User
     val clipboard = LocalClipboardManager.current
@@ -91,11 +97,18 @@ fun ChatBubble(
                     shape = shape,
                     modifier = Modifier.widthIn(max = bubbleMaxWidth)
                 ) {
-                    KollamaMarkdown(
-                        content = content,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                        contentColor = contentColor
-                    )
+                    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) {
+                        images.forEach { data ->
+                            BubbleImage(data)
+                            Spacer(modifier = Modifier.height(if (content.isBlank()) 0.dp else 8.dp))
+                        }
+                        if (content.isNotBlank()) {
+                            KollamaMarkdown(
+                                content = content,
+                                contentColor = contentColor
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -141,6 +154,20 @@ fun ChatBubble(
             onDismiss = { showInfo = false }
         )
     }
+}
+
+@Composable
+private fun BubbleImage(data: String) {
+    val bitmap = remember(data) { decodeBase64ToImageBitmap(data) } ?: return
+    Image(
+        bitmap = bitmap,
+        contentDescription = null,
+        contentScale = ContentScale.FillWidth,
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(max = 240.dp)
+            .clip(RoundedCornerShape(12.dp))
+    )
 }
 
 @Preview(showBackground = true)

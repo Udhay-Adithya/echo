@@ -22,7 +22,7 @@ data class ChatUiState(
 
 /** Messages that have content worth rendering (hides the blank streaming placeholder). */
 val ChatUiState.visibleMessages: List<ChatMessage>
-    get() = messages.filter { it.content.isNotBlank() }
+    get() = messages.filter { it.content.isNotBlank() || !it.images.isNullOrEmpty() }
 
 /** Show a standalone loader bubble while we wait for the first token of a reply. */
 val ChatUiState.shouldShowAssistantLoader: Boolean

@@ -35,6 +35,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -45,6 +47,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.udhay.kollama.R
 import com.udhay.kollama.core.ui.common.Loader
 import com.udhay.kollama.core.ui.theme.KollamaTheme
+import com.udhay.kollama.feature.chat.presentation.components.ChatAttachment
 import com.udhay.kollama.feature.chat.presentation.components.ChatBubble
 import com.udhay.kollama.feature.chat.presentation.components.ChatDrawer
 import com.udhay.kollama.feature.chat.presentation.components.ChatInputBar
@@ -69,6 +72,7 @@ fun ChatPage(
     val listState = rememberLazyListState()
     val uiState by viewModel.uiState.collectAsState()
     val chats by viewModel.chats.collectAsStateWithLifecycle()
+    val attachments = remember { mutableStateListOf<ChatAttachment>() }
 
     val visibleMessages = uiState.visibleMessages
     val showLoaderBubble = uiState.shouldShowAssistantLoader
@@ -94,9 +98,11 @@ fun ChatPage(
 
     fun sendMessage() {
         val text = textFieldState.text.toString().trim()
-        if (text.isNotEmpty()) {
-            viewModel.sendMessage(text)
+        val images = attachments.mapNotNull { it.base64 }
+        if (text.isNotEmpty() || images.isNotEmpty()) {
+            viewModel.sendMessage(text, images)
             textFieldState.clearText()
+            attachments.clear()
         }
     }
 
@@ -213,6 +219,9 @@ fun ChatPage(
                     textFieldState = textFieldState,
                     onSend = { sendMessage() },
                     enabled = !uiState.isWaitingForAssistant,
+                    attachments = attachments,
+                    onAddAttachment = { attachments.add(it) },
+                    onRemoveAttachment = { id -> attachments.removeAll { it.id == id } },
                     modifier = Modifier
                         .fillMaxWidth()
                         .imePadding()

@@ -61,9 +61,9 @@ class ChatViewModel(
             initialValue = emptyList()
         )
 
-    fun sendMessage(text: String) {
+    fun sendMessage(text: String, images: List<String> = emptyList()) {
         val trimmed = text.trim()
-        if (trimmed.isBlank() || _uiState.value.isStreaming) return
+        if ((trimmed.isBlank() && images.isEmpty()) || _uiState.value.isStreaming) return
 
         viewModelScope.launch {
             val settings = getUserSettingsUseCase().first()
@@ -76,8 +76,9 @@ class ChatViewModel(
                 chatId = UUID.randomUUID().toString()
                 startedNewChat = true
                 val now = System.currentTimeMillis()
+                val title = titleFrom(trimmed.ifBlank { "Image" })
                 createChatUseCase(
-                    Chat(id = chatId, title = titleFrom(trimmed), createdAt = now, updatedAt = now)
+                    Chat(id = chatId, title = title, createdAt = now, updatedAt = now)
                 )
                 _uiState.update { it.copy(currentChatId = chatId) }
             }
@@ -88,6 +89,7 @@ class ChatViewModel(
                 chatId = effectiveChatId,
                 role = MessageRole.User,
                 content = trimmed,
+                images = images.ifEmpty { null },
                 createdAt = System.currentTimeMillis()
             )
             _uiState.update { it.copy(messages = it.messages + userMessage, error = null) }
@@ -99,7 +101,7 @@ class ChatViewModel(
                 return@launch
             }
 
-            if (startedNewChat && chatId != null) {
+            if (startedNewChat && chatId != null && trimmed.isNotBlank()) {
                 generateTitleAsync(chatId, model, trimmed)
             }
 
