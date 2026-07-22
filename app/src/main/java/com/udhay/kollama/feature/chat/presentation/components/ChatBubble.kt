@@ -64,6 +64,20 @@ fun ChatBubble(
     }
 
     Column(modifier = modifier) {
+        if (!isUser && !message.thinking.isNullOrBlank()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start
+            ) {
+                ThinkingSection(
+                    thinking = message.thinking,
+                    isStreaming = message.isStreaming,
+                    modifier = Modifier.fillMaxWidth(0.85f)
+                )
+            }
+            Spacer(modifier = Modifier.height(6.dp))
+        }
+
         BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
             val bubbleMaxWidth = maxWidth * 0.75f
 

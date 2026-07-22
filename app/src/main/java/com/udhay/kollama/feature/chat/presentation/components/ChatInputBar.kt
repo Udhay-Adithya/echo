@@ -40,7 +40,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.udhay.kollama.R
+import com.udhay.kollama.feature.settings.presentation.viewmodel.UserSettingsViewModel
+import org.koin.androidx.compose.koinViewModel
 
 /** A staged, not-yet-sent attachment picked via the attach sheet. */
 private data class StagedAttachment(val label: String, val iconRes: Int)
@@ -51,8 +54,10 @@ fun ChatInputBar(
     textFieldState: TextFieldState,
     onSend: () -> Unit,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    settingsViewModel: UserSettingsViewModel = koinViewModel()
 ) {
+    val settings by settingsViewModel.settings.collectAsStateWithLifecycle()
     val hasText = textFieldState.text.isNotEmpty()
     val canSend = enabled && hasText
     val disabledIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
@@ -194,7 +199,9 @@ fun ChatInputBar(
                 showAttachSheet = false
                 filesLauncher.launch(arrayOf("*/*"))
             },
-            onDismiss = { showAttachSheet = false }
+            onDismiss = { showAttachSheet = false },
+            thinkingEnabled = settings.thinkingEnabled,
+            onThinkingChange = { settingsViewModel.save(settings.copy(thinkingEnabled = it)) }
         )
     }
 }

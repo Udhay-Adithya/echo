@@ -25,6 +25,10 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import org.koin.core.annotation.KoinViewModel
 import org.udhay.ollama.api.ChatRequest
 import org.udhay.ollama.api.Message
@@ -120,7 +124,14 @@ class ChatViewModel(
         }
 
         chatWithModelStreamUseCase(
-            ChatRequest(model = model, messages = requestMessages, stream = true)
+            ChatRequest(
+                model = model,
+                messages = requestMessages,
+                stream = true,
+                think = if (settings.thinkingEnabled) JsonPrimitive(true) else null,
+                options = buildOptions(settings),
+                keepAlive = settings.keepAlive?.takeIf { it.isNotBlank() }?.let { JsonPrimitive(it) }
+            )
         ).catch { e ->
             _uiState.update {
                 it.copy(
@@ -226,6 +237,16 @@ class ChatViewModel(
         if (chatId != null && !_uiState.value.isIncognito) {
             viewModelScope.launch { truncateChatFromUseCase(chatId, message.createdAt) }
         }
+    }
+
+    private fun buildOptions(settings: UserSettings): JsonElement? {
+        val obj = buildJsonObject {
+            settings.temperature?.let { put("temperature", it) }
+            settings.topK?.let { put("top_k", it) }
+            settings.topP?.let { put("top_p", it) }
+            settings.numCtx?.let { put("num_ctx", it) }
+        }
+        return obj.takeIf { it.isNotEmpty() }
     }
 
     private fun buildSystemPrompt(settings: UserSettings): String? {

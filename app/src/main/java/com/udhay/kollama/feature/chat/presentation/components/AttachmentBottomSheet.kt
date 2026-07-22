@@ -14,9 +14,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -35,7 +38,9 @@ fun AttachmentBottomSheet(
     onPhotos: () -> Unit,
     onFiles: () -> Unit,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    thinkingEnabled: Boolean = false,
+    onThinkingChange: (Boolean) -> Unit = {}
 ) {
     val sheetState = rememberModalBottomSheetState()
 
@@ -79,6 +84,26 @@ fun AttachmentBottomSheet(
                     modifier = Modifier.weight(1f)
                 )
             }
+
+            Spacer(Modifier.height(16.dp))
+
+            ListItem(
+                headlineContent = { Text("Thinking") },
+                supportingContent = { Text("Let the model reason before answering") },
+                leadingContent = {
+                    Icon(
+                        painter = painterResource(R.drawable.lightbulb_2_24px),
+                        contentDescription = null
+                    )
+                },
+                trailingContent = {
+                    Switch(
+                        checked = thinkingEnabled,
+                        onCheckedChange = onThinkingChange
+                    )
+                },
+                colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent)
+            )
         }
     }
 }

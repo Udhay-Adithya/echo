@@ -10,5 +10,13 @@ data class UserSettings(
     val amoledPaletteEnabled: Boolean = false,
     val selectedModel: OllamaModel? = null,
     val serverHost: String = "http://localhost:11434",
-    val serverHeaders: Map<String, String> = emptyMap()
+    val serverHeaders: Map<String, String> = emptyMap(),
+
+    // Generation preferences
+    val thinkingEnabled: Boolean = false,
+    val temperature: Float? = null,
+    val topK: Int? = null,
+    val topP: Float? = null,
+    val numCtx: Int? = null,
+    val keepAlive: String? = null
 )

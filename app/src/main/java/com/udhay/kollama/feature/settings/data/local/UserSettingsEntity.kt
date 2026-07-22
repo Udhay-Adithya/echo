@@ -28,6 +28,14 @@ data class UserSettingsEntity(
     val serverHost: String = "http://localhost:11434",
     val serverHeaders: Map<String, String> = emptyMap(),
 
+    // Generation preferences
+    val thinkingEnabled: Boolean = false,
+    val temperature: Float? = null,
+    val topK: Int? = null,
+    val topP: Float? = null,
+    val numCtx: Int? = null,
+    val keepAlive: String? = null,
+
     // Timestamps
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()

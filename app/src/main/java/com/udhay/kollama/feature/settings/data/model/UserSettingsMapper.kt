@@ -11,7 +11,13 @@ fun UserSettingsEntity.toDomain() = UserSettings(
     amoledPaletteEnabled = amoledPaletteEnabled,
     selectedModel = selectedModel,
     serverHost = serverHost,
-    serverHeaders = serverHeaders
+    serverHeaders = serverHeaders,
+    thinkingEnabled = thinkingEnabled,
+    temperature = temperature,
+    topK = topK,
+    topP = topP,
+    numCtx = numCtx,
+    keepAlive = keepAlive
 )
 
 fun UserSettings.toEntity() = UserSettingsEntity(
@@ -24,5 +30,11 @@ fun UserSettings.toEntity() = UserSettingsEntity(
     selectedModel = selectedModel,
     serverHost = serverHost,
     serverHeaders = serverHeaders,
+    thinkingEnabled = thinkingEnabled,
+    temperature = temperature,
+    topK = topK,
+    topP = topP,
+    numCtx = numCtx,
+    keepAlive = keepAlive,
     updatedAt = System.currentTimeMillis()
 )
