@@ -141,6 +141,7 @@ fun ModelSelectorBottomSheet(
                                     .copy(MaterialTheme.colorScheme.surfaceContainerHigh),
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .padding(all = 8.dp)
                                     .clip(RoundedCornerShape(12.dp))
                                     .clickable {
                                         settingsViewModel.save(settings.copy(selectedModel = model))
