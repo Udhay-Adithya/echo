@@ -1,61 +1,33 @@
 package com.udhay.kollama.feature.chat.presentation.state
 
-import org.udhay.ollama.api.ChatResponse
-import org.udhay.ollama.api.Message
-import org.udhay.ollama.api.MessageRole
+import com.udhay.kollama.feature.chat.domain.model.ChatMessage
 
-sealed interface ChatUiState {
-    data object Loading : ChatUiState
-    data class Success(val chatResponses: List<ChatResponse>) : ChatUiState
-    data class Error(
-        val message: String,
-        val chatResponses: List<ChatResponse> = emptyList()
-    ) : ChatUiState
-}
+/**
+ * Single immutable snapshot of the chat screen.
+ *
+ * @property currentChatId Id of the persisted chat being viewed, or `null` for a
+ *   brand-new / incognito conversation that has not been saved.
+ * @property messages Ordered conversation, including any in-flight streaming reply.
+ * @property isIncognito When `true`, nothing in this conversation is persisted.
+ * @property isStreaming `true` while an assistant reply is being received.
+ * @property error User-facing error for the last send, if any.
+ */
+data class ChatUiState(
+    val currentChatId: String? = null,
+    val messages: List<ChatMessage> = emptyList(),
+    val isIncognito: Boolean = false,
+    val isStreaming: Boolean = false,
+    val error: String? = null
+)
 
-val ChatUiState.chatResponsesOrEmpty: List<ChatResponse>
-    get() = when (this) {
-        is ChatUiState.Loading -> emptyList()
-        is ChatUiState.Success -> chatResponses
-        is ChatUiState.Error -> chatResponses
-    }
+/** Messages that have content worth rendering (hides the blank streaming placeholder). */
+val ChatUiState.visibleMessages: List<ChatMessage>
+    get() = messages.filter { it.content.isNotBlank() }
 
-val ChatUiState.visibleMessages: List<Message>
-    get() {
-        val messages = chatResponsesOrEmpty
-            .mapNotNull { it.message }
-            .filter { it.content?.isNotBlank() == true }
-
-        return when (this) {
-            is ChatUiState.Error -> messages + Message(
-                role = MessageRole.Assistant,
-                content = message
-            )
-            else -> messages
-        }
-    }
-
-val ChatUiState.isWaitingForAssistant: Boolean
-    get() = when (this) {
-        is ChatUiState.Loading -> true
-        is ChatUiState.Success -> chatResponses.any { it.isPendingAssistantResponse }
-        is ChatUiState.Error -> false
-    }
-
+/** Show a standalone loader bubble while we wait for the first token of a reply. */
 val ChatUiState.shouldShowAssistantLoader: Boolean
-    get() = when (this) {
-        is ChatUiState.Loading -> true
-        is ChatUiState.Success -> chatResponses.any {
-            it.isPendingAssistantResponse && it.message?.content.isNullOrBlank()
-        }
-        is ChatUiState.Error -> false
-    }
+    get() = messages.any { it.isStreaming && it.content.isBlank() }
 
-private val ChatResponse.isPendingAssistantResponse: Boolean
-    get() = done == false && message?.role == MessageRole.Assistant
-
-fun List<ChatResponse>.withoutBlankAssistantPlaceholder(): List<ChatResponse> {
-    return dropLastWhile {
-        it.isPendingAssistantResponse && it.message?.content.isNullOrBlank()
-    }
-}
+/** Disable the input bar while a reply is in flight. */
+val ChatUiState.isWaitingForAssistant: Boolean
+    get() = isStreaming
