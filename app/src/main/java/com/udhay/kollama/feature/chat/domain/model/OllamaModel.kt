@@ -10,5 +10,6 @@ data class OllamaModel (
     val modifiedAt: String? = null,
     val size: Long? = null,
     val digest: String? = null,
-    val details: JsonElement? = null
+    val details: JsonElement? = null,
+    val capabilities: List<String> = emptyList()
 )

@@ -10,4 +10,8 @@ interface ModelsRepository {
     suspend fun getModels() : List<OllamaModel>
 
     suspend fun getStatus() : Boolean
+
+    suspend fun getModelCapabilities(model: String): List<String>
+
+    suspend fun getRunningModelNames(): Set<String>
 }

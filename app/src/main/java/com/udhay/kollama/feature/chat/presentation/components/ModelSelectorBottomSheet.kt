@@ -4,9 +4,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,6 +20,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -53,6 +56,7 @@ fun ModelSelectorBottomSheet(
 ) {
     val settings by settingsViewModel.settings.collectAsStateWithLifecycle()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val runningModels by viewModel.runningModels.collectAsStateWithLifecycle()
 
     var showSheet by remember { mutableStateOf(false) }
 
@@ -122,9 +126,16 @@ fun ModelSelectorBottomSheet(
                         contentPadding = PaddingValues(vertical = 8.dp)
                     ) {
                         items(models) { model ->
+                            val isRunning = model.name in runningModels || model.model in runningModels
                             ListItem(
                                 headlineContent = {
-                                    Text(text = model.name ?: "N/A")
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(text = model.name ?: "N/A")
+                                        if (isRunning) {
+                                            Spacer(Modifier.width(8.dp))
+                                            ReadyChip()
+                                        }
+                                    }
                                 },
                                 supportingContent = {
                                     Text("Last Modified: ${formatDate(model.modifiedAt)}")
@@ -144,7 +155,9 @@ fun ModelSelectorBottomSheet(
                                     .padding(all = 8.dp)
                                     .clip(RoundedCornerShape(12.dp))
                                     .clickable {
-                                        settingsViewModel.save(settings.copy(selectedModel = model))
+                                        viewModel.onModelChosen(model) { resolved ->
+                                            settingsViewModel.save(settings.copy(selectedModel = resolved))
+                                        }
                                         showSheet = false
                                     }
                             )
@@ -153,6 +166,21 @@ fun ModelSelectorBottomSheet(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ReadyChip() {
+    Surface(
+        shape = RoundedCornerShape(50),
+        color = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+    ) {
+        Text(
+            text = "Ready",
+            style = MaterialTheme.typography.labelSmall,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+        )
     }
 }
 

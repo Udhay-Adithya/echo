@@ -11,6 +11,7 @@ import org.koin.core.annotation.Single
 import org.udhay.ollama.OllamaClient
 import org.udhay.ollama.api.ChatRequest
 import org.udhay.ollama.api.ChatResponse
+import org.udhay.ollama.api.ShowRequest
 
 @Single
 class ModelsRepositoryImpl(
@@ -34,6 +35,22 @@ class ModelsRepositoryImpl(
             ollamaClient.ping()
         } catch (e: Exception) {
             false
+        }
+    }
+
+    override suspend fun getModelCapabilities(model: String): List<String> {
+        return try {
+            ollamaClient.show(ShowRequest(model = model)).capabilities ?: emptyList()
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    override suspend fun getRunningModelNames(): Set<String> {
+        return try {
+            ollamaClient.ps().models.mapNotNull { it.name ?: it.model }.toSet()
+        } catch (e: Exception) {
+            emptySet()
         }
     }
 }

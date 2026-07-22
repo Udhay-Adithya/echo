@@ -8,6 +8,7 @@ import com.udhay.kollama.feature.chat.domain.model.ChatMessage
 import com.udhay.kollama.feature.chat.domain.model.ChatMessageMetadata
 import com.udhay.kollama.feature.chat.domain.usecase.ChatWithModelStreamUseCase
 import com.udhay.kollama.feature.chat.domain.usecase.CreateChatUseCase
+import com.udhay.kollama.feature.chat.domain.usecase.GetModelCapabilitiesUseCase
 import com.udhay.kollama.feature.chat.domain.usecase.DeleteChatUseCase
 import com.udhay.kollama.feature.chat.domain.usecase.GenerateChatTitleUseCase
 import com.udhay.kollama.feature.chat.domain.usecase.ObserveChatMessagesUseCase
@@ -49,6 +50,7 @@ class ChatViewModel(
     private val truncateChatFromUseCase: TruncateChatFromUseCase,
     private val generateChatTitleUseCase: GenerateChatTitleUseCase,
     private val updateChatTitleUseCase: UpdateChatTitleUseCase,
+    private val getModelCapabilitiesUseCase: GetModelCapabilitiesUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChatUiState())
@@ -135,12 +137,22 @@ class ChatViewModel(
             )
         }
 
+        val supportsThinking = when {
+            !settings.thinkingEnabled -> false
+            settings.selectedModel == null -> false
+            settings.selectedModel.capabilities.isNotEmpty() ->
+                settings.selectedModel.capabilities.contains("thinking")
+            // Legacy selection without cached capabilities — resolve once.
+            else -> runCatching { getModelCapabilitiesUseCase(model) }
+                .getOrDefault(emptyList()).contains("thinking")
+        }
+
         chatWithModelStreamUseCase(
             ChatRequest(
                 model = model,
                 messages = requestMessages,
                 stream = true,
-                think = if (settings.thinkingEnabled) JsonPrimitive(true) else null,
+                think = if (supportsThinking) JsonPrimitive(true) else null,
                 options = buildOptions(settings),
                 keepAlive = settings.keepAlive?.takeIf { it.isNotBlank() }?.let { JsonPrimitive(it) }
             )

@@ -2,7 +2,10 @@ package com.udhay.kollama.feature.chat.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.udhay.kollama.feature.chat.domain.model.OllamaModel
+import com.udhay.kollama.feature.chat.domain.usecase.GetModelCapabilitiesUseCase
 import com.udhay.kollama.feature.chat.domain.usecase.GetModelsUseCase
+import com.udhay.kollama.feature.chat.domain.usecase.GetRunningModelNamesUseCase
 import com.udhay.kollama.feature.chat.domain.usecase.GetStatusUseCase
 import com.udhay.kollama.feature.chat.presentation.state.ModelsUiState
 import com.udhay.kollama.feature.settings.domain.usecase.GetUserSettingsUseCase
@@ -17,6 +20,8 @@ class ModelsViewModel(
     private val getModelsUseCase: GetModelsUseCase,
     private val getStatusUseCase: GetStatusUseCase,
     private val getUserSettingsUseCase: GetUserSettingsUseCase,
+    private val getModelCapabilitiesUseCase: GetModelCapabilitiesUseCase,
+    private val getRunningModelNamesUseCase: GetRunningModelNamesUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ModelsUiState>(ModelsUiState.Loading)
@@ -24,6 +29,9 @@ class ModelsViewModel(
 
     private val _isServerOnline = MutableStateFlow<Boolean?>(null)
     val isServerOnline: StateFlow<Boolean?> = _isServerOnline
+
+    private val _runningModels = MutableStateFlow<Set<String>>(emptySet())
+    val runningModels: StateFlow<Set<String>> = _runningModels
 
     init {
         observeSettingsChanges()
@@ -56,11 +64,23 @@ class ModelsViewModel(
                 } else {
                     _uiState.value = ModelsUiState.Success(result)
                     _isServerOnline.value = true
+                    _runningModels.value = getRunningModelNamesUseCase()
                 }
             } catch (e: Exception) {
                 _uiState.value = ModelsUiState.Error("Failed to connect to Ollama server")
                 _isServerOnline.value = false
             }
+        }
+    }
+
+    /**
+     * Resolves the chosen model's capabilities (via /api/show) before persisting it,
+     * so the chat layer knows whether the model supports thinking, tools, vision, etc.
+     */
+    fun onModelChosen(model: OllamaModel, save: (OllamaModel) -> Unit) {
+        viewModelScope.launch {
+            val capabilities = getModelCapabilitiesUseCase(model.model ?: model.name.orEmpty())
+            save(model.copy(capabilities = capabilities))
         }
     }
 
