@@ -38,4 +38,14 @@ class Converters {
     fun toMap(value: String?): Map<String, String>? {
         return value?.let { json.decodeFromString<Map<String, String>>(it) }
     }
+
+    @TypeConverter
+    fun fromStringList(list: List<String>?): String? {
+        return list?.let { json.encodeToString(it) }
+    }
+
+    @TypeConverter
+    fun toStringList(value: String?): List<String>? {
+        return value?.let { json.decodeFromString<List<String>>(it) }
+    }
 }
