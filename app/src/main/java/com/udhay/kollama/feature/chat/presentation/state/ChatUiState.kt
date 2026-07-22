@@ -20,13 +20,20 @@ data class ChatUiState(
     val error: String? = null
 )
 
-/** Messages that have content worth rendering (hides the blank streaming placeholder). */
+/** Messages that have something worth rendering (hides the fully-blank streaming placeholder). */
 val ChatUiState.visibleMessages: List<ChatMessage>
-    get() = messages.filter { it.content.isNotBlank() || !it.images.isNullOrEmpty() }
+    get() = messages.filter {
+        it.content.isNotBlank() || !it.images.isNullOrEmpty() || !it.thinking.isNullOrBlank()
+    }
 
-/** Show a standalone loader bubble while we wait for the first token of a reply. */
+/**
+ * Show a standalone loader bubble only while we wait for the first signal of a reply —
+ * i.e. no content and no streamed reasoning yet.
+ */
 val ChatUiState.shouldShowAssistantLoader: Boolean
-    get() = messages.any { it.isStreaming && it.content.isBlank() }
+    get() = messages.any {
+        it.isStreaming && it.content.isBlank() && it.thinking.isNullOrBlank()
+    }
 
 /** Disable the input bar while a reply is in flight. */
 val ChatUiState.isWaitingForAssistant: Boolean

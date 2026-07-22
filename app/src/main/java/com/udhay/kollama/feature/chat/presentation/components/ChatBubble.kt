@@ -43,7 +43,8 @@ fun ChatBubble(
 ) {
     val content = message.content
     val images = message.images.orEmpty()
-    if (content.isBlank() && images.isEmpty()) return
+    val hasBubbleBody = content.isNotBlank() || images.isNotEmpty()
+    if (!hasBubbleBody && message.thinking.isNullOrBlank()) return
 
     val isUser = message.role == MessageRole.User
     val clipboard = LocalClipboardManager.current
@@ -84,65 +85,69 @@ fun ChatBubble(
             Spacer(modifier = Modifier.height(6.dp))
         }
 
-        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-            val bubbleMaxWidth = maxWidth * 0.75f
+        if (hasBubbleBody) {
+            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                val bubbleMaxWidth = maxWidth * 0.75f
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = arrangement
-            ) {
-                Surface(
-                    color = containerColor,
-                    contentColor = contentColor,
-                    shape = shape,
-                    modifier = Modifier.widthIn(max = bubbleMaxWidth)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = arrangement
                 ) {
-                    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) {
-                        images.forEach { data ->
-                            BubbleImage(data)
-                            Spacer(modifier = Modifier.height(if (content.isBlank()) 0.dp else 8.dp))
-                        }
-                        if (content.isNotBlank()) {
-                            KollamaMarkdown(
-                                content = content,
-                                contentColor = contentColor
-                            )
+                    Surface(
+                        color = containerColor,
+                        contentColor = contentColor,
+                        shape = shape,
+                        modifier = Modifier.widthIn(max = bubbleMaxWidth)
+                    ) {
+                        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) {
+                            images.forEach { data ->
+                                BubbleImage(data)
+                                Spacer(modifier = Modifier.height(if (content.isBlank()) 0.dp else 8.dp))
+                            }
+                            if (content.isNotBlank()) {
+                                KollamaMarkdown(
+                                    content = content,
+                                    contentColor = contentColor
+                                )
+                            }
                         }
                     }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
+        if (hasBubbleBody && !message.isStreaming) {
+            Spacer(modifier = Modifier.height(6.dp))
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp),
-            horizontalArrangement = arrangement
-        ) {
-            Row {
-                IconButton(onClick = { clipboard.setText(AnnotatedString(content)) }) {
-                    Icon(
-                        painter = painterResource(R.drawable.content_copy_24px),
-                        contentDescription = "Copy message"
-                    )
-                }
-
-                if (isUser) {
-                    IconButton(onClick = { onEdit(message) }) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp),
+                horizontalArrangement = arrangement
+            ) {
+                Row {
+                    IconButton(onClick = { clipboard.setText(AnnotatedString(content)) }) {
                         Icon(
-                            painter = painterResource(R.drawable.edit_square_24px),
-                            contentDescription = "Edit message"
+                            painter = painterResource(R.drawable.content_copy_24px),
+                            contentDescription = "Copy message"
                         )
                     }
-                }
 
-                IconButton(onClick = { showInfo = true }) {
-                    Icon(
-                        painter = painterResource(R.drawable.info_24px),
-                        contentDescription = "Message info"
-                    )
+                    if (isUser) {
+                        IconButton(onClick = { onEdit(message) }) {
+                            Icon(
+                                painter = painterResource(R.drawable.edit_square_24px),
+                                contentDescription = "Edit message"
+                            )
+                        }
+                    }
+
+                    IconButton(onClick = { showInfo = true }) {
+                        Icon(
+                            painter = painterResource(R.drawable.info_24px),
+                            contentDescription = "Message info"
+                        )
+                    }
                 }
             }
         }
