@@ -1,18 +1,19 @@
 package com.udhay.kollama.feature.chat.presentation.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -50,21 +51,25 @@ fun ChatBubble(message: Message) {
     }
 
     Column {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = arrangement
-        ) {
-            Surface(
-                color = containerColor,
-                contentColor = contentColor,
-                shape = shape,
-                modifier = Modifier.fillMaxWidth(0.75f)
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            val bubbleMaxWidth = maxWidth * 0.75f
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = arrangement
             ) {
-                Text(
-                    text = content,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                    style = MaterialTheme.typography.bodyLarge
-                )
+                Surface(
+                    color = containerColor,
+                    contentColor = contentColor,
+                    shape = shape,
+                    modifier = Modifier.widthIn(max = bubbleMaxWidth)
+                ) {
+                    KollamaMarkdown(
+                        content = content,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                        contentColor = contentColor
+                    )
+                }
             }
         }
 
@@ -104,10 +109,29 @@ fun ChatBubble(message: Message) {
 
 @Preview(showBackground = true)
 @Composable
-private fun ChatBubblePreview() {
-    KollamaTheme() {
-        ChatBubble(
-            message = Message(role = MessageRole.User, content = "Hello Kollama!")
-        )
+private fun ChatBubbleMarkdownPreview() {
+    KollamaTheme {
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            ChatBubble(
+                message = Message(
+                    role = MessageRole.User,
+                    content = "Hello! **This is bold** and *this is italic*."
+                )
+            )
+            ChatBubble(
+                message = Message(
+                    role = MessageRole.Assistant,
+                    content = """
+                        Here is some code:
+                        ```kotlin
+                        fun hello() = println("Hello")
+                        ```
+                        And a list:
+                        - Item 1
+                        - Item 2
+                    """.trimIndent()
+                )
+            )
+        }
     }
 }

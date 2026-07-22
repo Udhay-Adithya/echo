@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.udhay.kollama.feature.chat.domain.usecase.ChatWithModelStreamUseCase
 import com.udhay.kollama.feature.chat.presentation.state.ChatUiState
+import com.udhay.kollama.feature.chat.presentation.state.chatResponsesOrEmpty
+import com.udhay.kollama.feature.chat.presentation.state.withoutBlankAssistantPlaceholder
 import com.udhay.kollama.feature.settings.domain.usecase.GetUserSettingsUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,21 +32,26 @@ class ChatViewModel(
         if (text.isBlank()) return
 
         viewModelScope.launch {
-            val settings = getUserSettingsUseCase().first()
-            val model = settings.selectedModel?.model ?: "llama3"
-
             val userMessage = Message(role = MessageRole.User, content = text)
             val userResponse = ChatResponse(message = userMessage, done = true)
 
             // Get current list of responses or start fresh
-            val currentResponses = when (val state = _uiState.value) {
-                is ChatUiState.Success -> state.chatResponses
-                else -> emptyList()
-            }
+            val currentResponses = _uiState.value.chatResponsesOrEmpty
 
             val messagesForRequest = currentResponses.mapNotNull { it.message } + userMessage
 
-            _uiState.value = ChatUiState.Success(currentResponses + userResponse)
+            val chatResponsesWithUserMessage = currentResponses + userResponse
+            _uiState.value = ChatUiState.Success(chatResponsesWithUserMessage)
+
+            val settings = getUserSettingsUseCase().first()
+            val model = settings.selectedModel?.model
+            if (model == null) {
+                _uiState.value = ChatUiState.Error(
+                    message = "No model selected",
+                    chatResponses = chatResponsesWithUserMessage
+                )
+                return@launch
+            }
 
             val assistantMessagePlaceholder = Message(role = MessageRole.Assistant, content = "")
             val assistantResponsePlaceholder = ChatResponse(message = assistantMessagePlaceholder, done = false)
@@ -62,7 +69,13 @@ class ChatViewModel(
                     stream = true
                 )
             ).catch { e ->
-                _uiState.value = ChatUiState.Error(e.message ?: "Unknown error")
+                val chatResponses = _uiState.value.chatResponsesOrEmpty
+                    .ifEmpty { chatResponsesWithUserMessage }
+                    .withoutBlankAssistantPlaceholder()
+                _uiState.value = ChatUiState.Error(
+                    message = e.message ?: "Unknown error",
+                    chatResponses = chatResponses
+                )
             }.collect { response ->
                 _uiState.update { state ->
                     if (state is ChatUiState.Success) {

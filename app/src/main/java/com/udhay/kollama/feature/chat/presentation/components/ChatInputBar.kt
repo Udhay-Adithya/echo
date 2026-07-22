@@ -37,8 +37,13 @@ import com.udhay.kollama.R
 fun ChatInputBar(
     textFieldState: TextFieldState,
     onSend: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
 ) {
+    val hasText = textFieldState.text.isNotEmpty()
+    val canSend = enabled && hasText
+    val disabledIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(28.dp),
@@ -69,11 +74,11 @@ fun ChatInputBar(
                     .padding(start = 8.dp, end = 8.dp, bottom = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = {}) {
+                IconButton(onClick = {}, enabled = enabled) {
                     Icon(
                         painter = painterResource(R.drawable.add_24px),
                         contentDescription = "Attach",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else disabledIconColor
                     )
                 }
 
@@ -81,23 +86,21 @@ fun ChatInputBar(
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                val hasText = textFieldState.text.isNotEmpty()
-
                 IconButton(
                     onClick = onSend,
-                    enabled = hasText,
+                    enabled = canSend,
                     modifier = Modifier.background(
-                        color = if (hasText) MaterialTheme.colorScheme.primary else Color.Transparent,
+                        color = if (canSend) MaterialTheme.colorScheme.primary else Color.Transparent,
                         shape = CircleShape
                     )
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.send_24px),
                         contentDescription = "Send",
-                        tint = if (hasText) {
+                        tint = if (canSend) {
                             MaterialTheme.colorScheme.onPrimary
                         } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                            disabledIconColor
                         }
                     )
                 }

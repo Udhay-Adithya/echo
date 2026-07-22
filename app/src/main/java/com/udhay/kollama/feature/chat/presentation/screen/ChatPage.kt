@@ -16,7 +16,6 @@ import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,18 +30,20 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.udhay.kollama.R
+import com.udhay.kollama.core.ui.common.Loader
 import com.udhay.kollama.core.ui.theme.KollamaTheme
 import com.udhay.kollama.feature.chat.presentation.components.ChatBubble
 import com.udhay.kollama.feature.chat.presentation.components.ChatDrawer
 import com.udhay.kollama.feature.chat.presentation.components.ChatInputBar
 import com.udhay.kollama.feature.chat.presentation.components.WelcomeScreen
-import com.udhay.kollama.feature.chat.presentation.state.ChatUiState
+import com.udhay.kollama.feature.chat.presentation.state.isWaitingForAssistant
+import com.udhay.kollama.feature.chat.presentation.state.shouldShowAssistantLoader
+import com.udhay.kollama.feature.chat.presentation.state.visibleMessages
 import com.udhay.kollama.feature.chat.presentation.viewmodel.ChatViewModel
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -60,11 +61,13 @@ fun ChatPage(
     val listState = rememberLazyListState()
     val uiState by viewModel.uiState.collectAsState()
 
-    val messages = (uiState as? ChatUiState.Success)?.chatResponses?.mapNotNull { it.message } ?: emptyList()
+    val visibleMessages = uiState.visibleMessages
+    val showLoaderBubble = uiState.shouldShowAssistantLoader
+    val visibleItemCount = visibleMessages.size + if (showLoaderBubble) 1 else 0
 
-    LaunchedEffect(messages.size) {
-        if (messages.isNotEmpty()) {
-            listState.animateScrollToItem(messages.size - 1)
+    LaunchedEffect(visibleItemCount) {
+        if (visibleItemCount > 0) {
+            listState.animateScrollToItem(visibleItemCount - 1)
         }
     }
 
@@ -126,32 +129,27 @@ fun ChatPage(
                         .weight(1f)
                         .fillMaxWidth()
                 ) {
-                    when (val state = uiState) {
-                        is ChatUiState.Loading -> {
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                CircularProgressIndicator()
+                    if (visibleMessages.isEmpty() && !showLoaderBubble) {
+                        WelcomeScreen(
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    } else {
+                        LazyColumn(
+                            state = listState,
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            itemsIndexed(visibleMessages) { _, message ->
+                                ChatBubble(message = message)
                             }
-                        }
-                        is ChatUiState.Error -> {
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                Text(text = state.message, color = MaterialTheme.colorScheme.error)
-                            }
-                        }
-                        is ChatUiState.Success -> {
-                            if (messages.isEmpty()) {
-                                WelcomeScreen(
-                                    modifier = Modifier.fillMaxSize()
-                                )
-                            } else {
-                                LazyColumn(
-                                    state = listState,
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentPadding = PaddingValues(16.dp),
-                                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                                ) {
-                                    itemsIndexed(messages) { _, message ->
-                                        ChatBubble(message = message)
-                                    }
+
+                            if (showLoaderBubble) {
+                                item {
+                                    Loader(
+                                        fill = false,
+                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+                                    )
                                 }
                             }
                         }
@@ -160,6 +158,7 @@ fun ChatPage(
                 ChatInputBar(
                     textFieldState = textFieldState,
                     onSend = { sendMessage() },
+                    enabled = !uiState.isWaitingForAssistant,
                     modifier = Modifier
                         .fillMaxWidth()
                         .imePadding()
