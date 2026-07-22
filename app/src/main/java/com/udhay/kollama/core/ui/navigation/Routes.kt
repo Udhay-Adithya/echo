@@ -5,4 +5,6 @@ sealed class Routes() {
     object Settings: Routes()
     object Personalization: Routes()
     object ConnectionSettings: Routes()
+    object ModelSettings: Routes()
+    object ModelManagement: Routes()
 }

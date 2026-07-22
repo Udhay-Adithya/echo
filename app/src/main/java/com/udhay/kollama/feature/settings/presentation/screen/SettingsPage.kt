@@ -32,6 +32,8 @@ fun SettingsPage(
     onNavigateBack: () -> Unit,
     onNavigateToPersonalization: () -> Unit,
     onNavigateToConnectionSettings: () -> Unit,
+    onNavigateToModelSettings: () -> Unit = {},
+    onNavigateToModelManagement: () -> Unit = {},
     viewModel: UserSettingsViewModel = koinViewModel()
 ) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
@@ -84,6 +86,16 @@ fun SettingsPage(
                 onTap = onNavigateToConnectionSettings,
                 title = "Connection Settings",
                 leadingIcon = painterResource(R.drawable.settings_24px),
+            )
+            SettingsListItem(
+                onTap = onNavigateToModelSettings,
+                title = "Model Settings",
+                leadingIcon = painterResource(R.drawable.lightbulb_2_24px),
+            )
+            SettingsListItem(
+                onTap = onNavigateToModelManagement,
+                title = "Manage Models",
+                leadingIcon = painterResource(R.drawable.download_24px),
                 isLast = true,
             )
 

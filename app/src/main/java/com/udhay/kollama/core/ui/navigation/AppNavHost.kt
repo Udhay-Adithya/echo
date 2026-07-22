@@ -7,7 +7,9 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
 import com.udhay.kollama.feature.chat.presentation.screen.ChatPage
+import com.udhay.kollama.feature.models.presentation.screen.ModelManagementPage
 import com.udhay.kollama.feature.settings.presentation.screen.ConnectionSettingsPage
+import com.udhay.kollama.feature.settings.presentation.screen.ModelSettingsPage
 import com.udhay.kollama.feature.settings.presentation.screen.PersonalizationPage
 import com.udhay.kollama.feature.settings.presentation.screen.SettingsPage
 
@@ -43,7 +45,9 @@ fun AppNavHost(
                     SettingsPage(
                         onNavigateBack = { popBack() },
                         onNavigateToPersonalization = { navigateTo(Routes.Personalization) },
-                        onNavigateToConnectionSettings = { navigateTo(Routes.ConnectionSettings) }
+                        onNavigateToConnectionSettings = { navigateTo(Routes.ConnectionSettings) },
+                        onNavigateToModelSettings = { navigateTo(Routes.ModelSettings) },
+                        onNavigateToModelManagement = { navigateTo(Routes.ModelManagement) }
                     )
                 }
 
@@ -55,6 +59,18 @@ fun AppNavHost(
 
                 is Routes.ConnectionSettings -> NavEntry(key) {
                     ConnectionSettingsPage(
+                        onNavigateBack = { popBack() }
+                    )
+                }
+
+                is Routes.ModelSettings -> NavEntry(key) {
+                    ModelSettingsPage(
+                        onNavigateBack = { popBack() }
+                    )
+                }
+
+                is Routes.ModelManagement -> NavEntry(key) {
+                    ModelManagementPage(
                         onNavigateBack = { popBack() }
                     )
                 }
