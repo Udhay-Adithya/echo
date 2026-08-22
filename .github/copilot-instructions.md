@@ -1,6 +1,6 @@
-# Copilot Instructions for Kollama
+# Copilot Instructions for Echo
 
-Kollama is a private, local AI companion Android app that connects to Ollama instances via the network. This document provides essential context for working effectively in this codebase.
+Echo is a private, local AI companion Android app that connects to Ollama instances via the network. This document provides essential context for working effectively in this codebase.
 
 ## Project Overview
 
@@ -36,7 +36,7 @@ Kollama is a private, local AI companion Android app that connects to Ollama ins
 ./gradlew test
 
 # Run single test class
-./gradlew test --tests com.udhay.kollama.ExampleUnitTest
+./gradlew test --tests com.udhay.echo.ExampleUnitTest
 
 # Run instrumentation tests on connected device/emulator
 ./gradlew connectedAndroidTest
@@ -117,7 +117,7 @@ Two main features:
 
 ### Dependency Injection (Koin)
 
-- **Entry point**: `KollamaApp` class with `@KoinApplication` annotation
+- **Entry point**: `EchoApp` class with `@KoinApplication` annotation
 - **Modules**: `DatabaseModule` and `NetworkModule`
 - **Key singletons**:
   - `OllamaClient`: Configured dynamically from user settings via `UserSettingsRepository`
