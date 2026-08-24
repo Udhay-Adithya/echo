@@ -7,14 +7,14 @@ plugins {
 }
 
 android {
-    namespace = "com.udhay.kollama"
+    namespace = "com.udhay.echo"
     compileSdk {
         version = release(37) {
         }
     }
 
     defaultConfig {
-        applicationId = "com.udhay.kollama"
+        applicationId = "com.udhay.echo"
         minSdk = 35
         targetSdk = 36
         versionCode = 1

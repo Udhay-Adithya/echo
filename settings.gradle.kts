@@ -23,6 +23,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "kollama"
+rootProject.name = "echo"
 include(":app")
  

@@ -1,8 +1,8 @@
 <div align="center">
 
-  <img src="app/src/main/res/drawable/ic_launcher_foreground.xml" width="128" height="128" alt="Kollama Logo">
+  <img src="app/src/main/res/drawable/ic_launcher_foreground.xml" width="128" height="128" alt="Echo Logo">
 
-  <h1>Kollama</h1>
+  <h1>Echo</h1>
 
   <p><b>Your Private, Local AI Companion on Android.</b></p>
 
