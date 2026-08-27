@@ -18,9 +18,13 @@ class NetworkModule {
                 OllamaClientConfig(
                     host = settings.serverHost,
                     headers = settings.serverHeaders,
-                    requestTimeoutMillis = 300_000, // 5 minutes
-                    connectTimeoutMillis = 10_000,  // 10 seconds
-                    socketTimeoutMillis = 300_000   // 5 minutes
+                    // No request ceiling: it bounds the response body read too, so any finite
+                    // value truncates a long stream mid-flight. socketTimeoutMillis is the right
+                    // guard — it measures inactivity, not total duration, so a stalled connection
+                    // still fails while a slow-but-alive generation runs to completion.
+                    requestTimeoutMillis = null,
+                    connectTimeoutMillis = 10_000, // 10 seconds
+                    socketTimeoutMillis = 300_000  // 5 minutes of silence
                 )
             }
         )
