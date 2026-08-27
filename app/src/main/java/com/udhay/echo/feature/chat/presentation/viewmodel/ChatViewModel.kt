@@ -203,7 +203,9 @@ class ChatViewModel(
             }
         }.collect { response ->
             val chunk = response.message?.content.orEmpty()
-            val thinkingChunk = response.thinking.orEmpty()
+            // /api/chat returns reasoning on the message; ChatResponse.thinking is the
+            // /api/generate shape and is always null here.
+            val thinkingChunk = response.message?.thinking.orEmpty()
             val toolCalls = response.message?.toolCalls?.mapNotNull { tc ->
                 val name = tc.function?.name ?: return@mapNotNull null
                 ToolCallInfo(name = name, arguments = tc.function?.arguments?.toString() ?: "{}")
