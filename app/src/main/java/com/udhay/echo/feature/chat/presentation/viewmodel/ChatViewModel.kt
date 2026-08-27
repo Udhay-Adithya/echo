@@ -32,14 +32,12 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import org.koin.core.annotation.KoinViewModel
 import org.udhay.ollama.api.ChatRequest
 import org.udhay.ollama.api.Message
 import org.udhay.ollama.api.MessageRole
+import org.udhay.ollama.api.Options
 import java.util.UUID
 
 @KoinViewModel
@@ -319,14 +317,14 @@ class ChatViewModel(
         }
     }
 
-    private fun buildOptions(settings: UserSettings): JsonElement? {
-        val obj = buildJsonObject {
-            settings.temperature?.let { put("temperature", it) }
-            settings.topK?.let { put("top_k", it) }
-            settings.topP?.let { put("top_p", it) }
-            settings.numCtx?.let { put("num_ctx", it) }
-        }
-        return obj.takeIf { it.isNotEmpty() }
+    private fun buildOptions(settings: UserSettings): Options? {
+        val options = Options(
+            temperature = settings.temperature?.toDouble(),
+            topK = settings.topK,
+            topP = settings.topP?.toDouble(),
+            numCtx = settings.numCtx,
+        )
+        return options.takeIf { it != Options() }
     }
 
     private fun buildSystemPrompt(settings: UserSettings): String? {
